@@ -1,0 +1,2 @@
+chassis:fdilink_ahrs:pavo_ros:simple_planner
+-DCATKIN_DEVEL_PREFIX=/home/bupt/yejiacong/catkin_chassis_ws/devel -DCMAKE_INSTALL_PREFIX=/home/bupt/yejiacong/catkin_chassis_ws/install -G Unix Makefiles

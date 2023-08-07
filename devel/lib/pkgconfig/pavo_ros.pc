@@ -1,0 +1,8 @@
+prefix=/home/bupt/yejiacong/catkin_chassis_ws/devel
+
+Name: pavo_ros
+Description: Description of pavo_ros
+Version: 2.0.5
+Cflags: -I/home/bupt/yejiacong/catkin_chassis_ws/devel/include
+Libs: -L${prefix}/lib 
+Requires: 
