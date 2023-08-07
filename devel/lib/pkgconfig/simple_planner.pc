@@ -1,8 +1,0 @@
-prefix=/home/bupt/yejiacong/catkin_chassis_ws/devel
-
-Name: simple_planner
-Description: Description of simple_planner
-Version: 0.1.0
-Cflags: 
-Libs: -L${prefix}/lib 
-Requires: 
