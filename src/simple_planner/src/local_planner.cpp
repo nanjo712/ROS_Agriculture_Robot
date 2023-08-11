@@ -51,7 +51,7 @@ namespace robomaster{
 
             local_path_pub_= nh.advertise<nav_msgs::Path>("path", 5);
 
-            cmd_vel_pub_ = nh.advertise<geometry_msgs::Twist>("/cmd_vel", 1);
+            cmd_vel_pub_ = nh.advertise<geometry_msgs::Twist>("/ctrl_vel", 1);
 
             global_path_sub_ = nh.subscribe("/global_planner/path", 5, &LocalPlanner::GlobalPathCallback,this);
 
