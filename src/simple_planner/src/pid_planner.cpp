@@ -46,16 +46,15 @@ namespace robomaster {
             nh.param<double>("goal_angle_tolerance", goal_angle_tolerance_, 0.05);
 
             tf_listener_ = std::make_shared<tf::TransformListener>();
-            cmd_vel_pub_ = nh.advertise<geometry_msgs::Twist>("/calib_vel", 1);
+            cmd_vel_pub_ = nh.advertise<geometry_msgs::Twist>("/cmd_vel", 1);
 
-            goal_sub_ = nh.subscribe("/item_pose", 1, &PIDPlanner::GoalCallback, this);
-
+            goal_sub_ = nh.subscribe("/vase_point", 1, &PIDPlanner::GoalCallback, this);
             plan_timer_ = nh.createTimer(ros::Duration(1.0 / plan_freq_), &PIDPlanner::Plan, this);
         }
 
         ~PIDPlanner() = default;
 
-        void GoalCallback(const geometry_msgs::PoseStamped::ConstPtr &msg) {
+        void GoalCallback(const geometry_msgs::Point32::ConstPtr &msg) {
             goal_ = *msg;
             plan_ = true;
 
@@ -66,82 +65,28 @@ namespace robomaster {
         void Plan(const ros::TimerEvent &event) {
 
             if (plan_) {
-                tf::Transform tag2goal_transform, baselink2goal_transform, baselink2tag_transform;
 
-                tag2goal_transform.setOrigin(tf::Vector3(0, 0, 0.26));
-                tf::Quaternion q;
-                q.setRPY(0, M_PI_2, M_PI_2);
-                tag2goal_transform.setRotation(q);
-
-                tf::Stamped<tf::Pose> object_in_baselink;
-                double timeout = (ros::Time::now() - goal_.header.stamp).toSec();
-                //std::cout<<"stamped time use: "<< timeout<<std::endl;
-                if(timeout > 0.090){
+                if (abs(goal_.x-0.5) <= goal_dist_tolerance_) {
+                    // plan_ = false;
                     geometry_msgs::Twist cmd_vel;
                     cmd_vel.linear.x = 0;
                     cmd_vel.linear.y = 0;
                     cmd_vel.angular.z = 0;
-                    cmd_vel.linear.z = 0; // Timeout...
+                    // cmd_vel.linear.z = 1; // Planning Success sig.2bringup
                     cmd_vel_pub_.publish(cmd_vel);
-                    // ROS_INFO("Time Out! %f", timeout);
-                    return;
-                }
-                //goal_.header.stamp = ros::Time::now();
-                TransformPose(tf_listener_, "base_link", goal_, object_in_baselink);
-                baselink2tag_transform.setOrigin(object_in_baselink.getOrigin());
-                baselink2tag_transform.setRotation(object_in_baselink.getRotation());
-
-                baselink2goal_transform = baselink2tag_transform * tag2goal_transform;
-
-                auto goal2baselink_transform = baselink2goal_transform.inverse();
-                tf::Matrix3x3 m(goal2baselink_transform.getRotation());
-
-                double roll, pitch, yaw;
-                m.getRPY(roll, pitch, yaw);
-                if (hypot(goal2baselink_transform.getOrigin().getX(), goal2baselink_transform.getOrigin().getY()) <=
-                    goal_dist_tolerance_
-                    && std::abs(yaw) < goal_angle_tolerance_) {
-                    plan_ = false;
-                    geometry_msgs::Twist cmd_vel;
-                    cmd_vel.linear.x = 0;
-                    cmd_vel.linear.y = 0;
-                    cmd_vel.angular.z = 0;
-                    cmd_vel.linear.z = 1; // Planning Success sig.2bringup
-                    cmd_vel_pub_.publish(cmd_vel);
-                    // ROS_INFO("Planning Success!");
+                    ROS_INFO("Calib Success!");
                     return;
                 }
 
-                auto dx = goal2baselink_transform.getOrigin().getX();
-                auto dy = goal2baselink_transform.getOrigin().getY();
-                auto dw = yaw;
-                Eigen::Matrix2d trans_matrix;
-                Eigen::Vector2d dxy_vector(dx, dy);
-                Eigen::Vector2d vxy_vector;
+                auto dx = goal_.x-0.5;
 
-                trans_matrix << std::cos(yaw), -std::sin(yaw),
-                        std::sin(yaw), std::cos(yaw);
+                if (dx>0.1) dx=0.1;
+                else if (dx<-0.1) dx=-0.1;
 
-                vxy_vector = trans_matrix.inverse() * dxy_vector;
-                auto vw = dw;
-                auto k = std::hypot(vxy_vector(0), vxy_vector(1));
                 geometry_msgs::Twist cmd_vel;
-                cmd_vel.angular.z = -vw;
-                cmd_vel.linear.x = -vxy_vector(0);
-                cmd_vel.linear.y = -vxy_vector(1);
-                cmd_vel.linear.z = 0; // Planning...
-                
-                // cmd_vel.angular.z = 0;
-                // cmd_vel.linear.x = 0;
-                // cmd_vel.linear.y = 0;
-                // cmd_vel.linear.z = 0; // Planning...
+                cmd_vel.linear.x = -dx;
                 cmd_vel_pub_.publish(cmd_vel);
                 
-                // std::cout << "x: " << goal2baselink_transform.getOrigin().getX() << " y: "
-                //           << goal2baselink_transform.getOrigin().getY() << " yaw: " << yaw  <<" vx: "
-                //           <<cmd_vel.linear.x<<" vy: "<<cmd_vel.linear.y<<" vyaw: "
-                //           <<cmd_vel.angular.z<< std::endl;
-
             }
         }
 
@@ -150,7 +95,7 @@ namespace robomaster {
         ros::NodeHandle nh;
         std::shared_ptr<tf::TransformListener> tf_listener_;
 
-        geometry_msgs::PoseStamped goal_;
+        geometry_msgs::Point32 goal_;
         ros::Timer plan_timer_;
 
         ros::Subscriber goal_sub_;

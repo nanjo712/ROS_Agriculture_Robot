@@ -2,3 +2,5 @@
 A ROS project for Agriculture Robot
 
 Simple planner comes from Robomaster.
+
+Using Camera G200 

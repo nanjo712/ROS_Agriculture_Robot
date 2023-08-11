@@ -169,9 +169,9 @@ namespace robomaster{
             // calculate velocity
 
             if( diff_yaw > 0 ){
-                cmd_vel.angular.z = std::min(p_coeff_*diff_yaw, 2.0);
+                cmd_vel.angular.z = std::min(p_coeff_*diff_yaw, 0.5);
             }else{
-                cmd_vel.angular.z = std::max(p_coeff_*diff_yaw, -2.0);
+                cmd_vel.angular.z = std::max(p_coeff_*diff_yaw, -0.5);
             }
 
 
