@@ -7,7 +7,7 @@
      若使用DETA100,则value="/dev/wheeltec_ch340"
      若使用WHEELTEC N系列，则不需要改动 -->
 
-    <param name="port"  value="/dev/ttyUSB1"/>
+    <param name="port"  value="/dev/ttyUSB0"/>
 
     <!-- 波特率 -->
     <param name="baud"  value="115200"/>

@@ -46,7 +46,7 @@ namespace robomaster {
             nh.param<double>("goal_angle_tolerance", goal_angle_tolerance_, 0.05);
 
             tf_listener_ = std::make_shared<tf::TransformListener>();
-            cmd_vel_pub_ = nh.advertise<geometry_msgs::Twist>("/cmd_vel", 1);
+            cmd_vel_pub_ = nh.advertise<geometry_msgs::Twist>("/calib_vel", 1);
 
             goal_sub_ = nh.subscribe("/vase_point", 1, &PIDPlanner::GoalCallback, this);
             plan_timer_ = nh.createTimer(ros::Duration(1.0 / plan_freq_), &PIDPlanner::Plan, this);
@@ -54,7 +54,7 @@ namespace robomaster {
 
         ~PIDPlanner() = default;
 
-        void GoalCallback(const geometry_msgs::Point32::ConstPtr &msg) {
+        void GoalCallback(const geometry_msgs::PointStamped::ConstPtr &msg) {
             goal_ = *msg;
             plan_ = true;
 
@@ -65,21 +65,26 @@ namespace robomaster {
         void Plan(const ros::TimerEvent &event) {
 
             if (plan_) {
+                if (goal_.header.stamp-ros::Time::now() > ros::Duration(0.2))
+                {
+                    ROS_INFO("Goal is too old!");
+                    return;
+                }
 
-                if (abs(goal_.x-0.5) <= goal_dist_tolerance_) {
-                    // plan_ = false;
+                if (abs(goal_.point.x-0.5) <= goal_dist_tolerance_ ) {
+                    plan_ = false;
                     geometry_msgs::Twist cmd_vel;
                     cmd_vel.linear.x = 0;
                     cmd_vel.linear.y = 0;
                     cmd_vel.angular.z = 0;
-                    // cmd_vel.linear.z = 1; // Planning Success sig.2bringup
+                    cmd_vel.linear.z = 1; // Planning Success sig.2bringup
                     cmd_vel_pub_.publish(cmd_vel);
-                    ROS_INFO("Calib Success!");
+                    // ROS_INFO("Calib Success!");
                     return;
                 }
 
-                auto dx = goal_.x-0.5;
-
+                auto dx = goal_.point.x - 0.5;
+                
                 if (dx>0.1) dx=0.1;
                 else if (dx<-0.1) dx=-0.1;
 
@@ -95,7 +100,7 @@ namespace robomaster {
         ros::NodeHandle nh;
         std::shared_ptr<tf::TransformListener> tf_listener_;
 
-        geometry_msgs::Point32 goal_;
+        geometry_msgs::PointStamped goal_;
         ros::Timer plan_timer_;
 
         ros::Subscriber goal_sub_;

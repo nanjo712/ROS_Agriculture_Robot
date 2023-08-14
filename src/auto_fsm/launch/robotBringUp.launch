@@ -1,0 +1,6 @@
+<launch>
+    <!-- <include file="$(find chassis)/launch/ahrs_and_pavo.launch"></include> -->
+    <include file="$(find chassis)/launch/chassis_bringUp.launch"></include>
+    <node pkg="cv_calibration" name="cv_calibration_node" type="cv_calibration.py" ></node>
+    <node pkg="auto_fsm" name="auto_fsm_node" type="auto_fsm_node" output="screen"></node>
+</launch>
