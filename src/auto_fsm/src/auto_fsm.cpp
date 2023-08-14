@@ -98,10 +98,11 @@ public:
         }
         else if (current==GO_TO_POINT)
         {
-            //TODO: check if the robot has reached the end
             if (curField==4) 
             {
                 current=STOP;
+                vel_topic=0;
+                vel_sub=nh.subscribe(topic_list[vel_topic],1,&FSM::velMsgCallback,this);
                 return ;
             }
             else 
